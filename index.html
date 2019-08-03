@@ -1,0 +1,190 @@
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/4.12.1/firebase.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.12.1/firebase-firestore.js"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBxiTiJp9wjwz9ES8dhCCeYn_IaT5XWydM&callback=initMap">
+</script>
+<style type="text/css">
+	.info-list{
+
+	}
+	.body-backgroud{
+		background-image: "./background.jpeg"
+	}
+</style>
+<script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
+<body c>
+	<nav class="navbar navbar-expand-lg navbar-light bg-light">
+		<img src = "./Image/logo.png" style ="height:40px">
+  <a class="navbar-brand" href="#">Earn Hub</a>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+        <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+      </li>
+      
+      
+      
+    </ul>
+    
+  </div>
+</nav>
+
+	<div id = "information-bar" class = "information body-backgroud">
+	</div>
+	<div class = "row">
+		<div id = "map" class = "mapstyle col-md-7 col-lg-7 col-sm-12" style="height: 700px; margin-left: 5%; margin-right: 3%; margin-top: 5%; margin-bottom: 3%; border-style: inset;"></div>
+		<div id = "orderInformation" class= "col-md-5 col-lg-4 ">
+
+			<ul class="list-group" id = "id-group">
+				  <li class = "list-group-item active">Order Information</li>
+				  <li class="list-group-item">Order overall score</li>
+				  <li class="list-group-item" id = "scoreinfor"></li>
+
+				  <li class = "list-group-item active">Order ID</li>
+				  <li class="list-group-item" id = "Id"></li>
+
+				  <li class="list-group-item active">Order Price</li>
+				  <li class="list-group-item" id = "price"></li>
+
+				  
+			</ul>
+			<ul class = "list-group" id = "pathlist">
+				<li class = "list-group-item active" id = "pathheader">Delievering Path</li>
+			</ul>
+		</div>
+	</div>
+	
+</body>
+<script type="text/javascript">
+// const firebase = require("firebase");
+// Required for side-effects
+// require("firebase/firestore");
+firebase.initializeApp({
+  apiKey: 'AIzaSyAXrK9juFjwOzrR2HFka3ba_gWEzoFQ1qg',
+  authDomain: 'nam5 (us-central)',
+  projectId: 'big-data-analysis-ximing'
+});
+
+
+var map;
+var directionsService;
+var directionsDisplay;
+function initMap(){
+	directionsService = new google.maps.DirectionsService();
+  	directionsDisplay = new google.maps.DirectionsRenderer();
+
+    map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 8,
+        center: { lat: 28.4733589, lng: -81.4510725 }
+    });
+    directionsDisplay.setMap(map);
+}
+
+
+
+function calcRoute(latArray, longArray){
+	wayPoints = [];
+
+	// var directionsService = new google.maps.DirectionsService();
+	// var directionsDisplay = new google.maps.DirectionsRenderer();
+	for(var i = 1; i < latArray.length - 1; i++){
+		var point = {};
+		point['lat'] = latArray[i];
+		point['lng'] = longArray[i];
+		wayPoints.push({location: point, stopover:true});
+	}
+	var start1 = 'New York';
+	var end1 = 'Los Angles';
+	var start  = {};
+	start['lat'] = latArray[0];
+	start['lng'] = longArray[0];
+	var end = {};
+	end['lat'] = latArray[latArray.length - 1];
+	end['lng'] = longArray[longArray.length - 1];
+	console.log(start);
+	console.log(end);
+	var request = {
+    origin: start,
+    destination: end,
+    waypoints:wayPoints,
+    travelMode: 'DRIVING'
+  };
+  directionsService.route(request, function(result, status) {
+    if (status == 'OK') {
+      directionsDisplay.setDirections(result);
+      console.log(result);
+      console.log("if executed");
+    }
+  });
+}
+
+
+// Initialize Cloud Firestore through Firebase
+var db = firebase.firestore();
+function showOrder(order, orderNums){
+	console.log("price here");
+	console.log(order);
+	
+		$("#Id").append("<li class = \"list-group-item info-list\"><span>" + orderNums + "</span></li>");
+		$("#price").append("<li class = \"list-group-item info-list\"><span>" + order[order.length - 1] + "</span></li>");
+		// console.log(order[order.length - 1]);
+
+}
+function clear(){
+	$("li.info-list").remove();
+}
+
+function showInfor(score, orders){
+	$("#scoreinfor").html(Math.round(score));
+	for(var order in orders){
+		showOrder(orders[order], order);
+	}
+
+}
+
+function showPlan(path){
+	for(var i = 0; i < path.length; i++){
+		$("#pathlist").append("<li class = \"list-group-item info-list\">" + path[i] + "</li>");
+	}
+}
+
+function displayData(data){
+	console.log(data.data());
+	var orderInfor = data.data();
+	var score = orderInfor['score']
+	var orders = orderInfor['orders']
+	$('#score').html('<h1>' + Math.round(score) + '</h1>');
+
+	var route = orderInfor['route'];
+	var path  = orderInfor['plan'];
+
+	var latArray = [];
+	var longArray = [];
+	for(var i = 0; i < route.length/2; i++){
+		latArray.push(route[i * 2]);
+		longArray.push(route[i * 2 + 1]);
+	}
+	showPlan(path);
+	calcRoute(latArray, longArray);
+	showInfor(score, orders);
+
+}
+db.collection("orderdata").doc("orders")
+    .onSnapshot(function(doc) {
+    	clear();
+    	displayData(doc);
+        // console.log("Current data: ", doc.data());
+    });
+
+</script>
+<body></body>
