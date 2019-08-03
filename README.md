@@ -30,7 +30,7 @@ All orders in the incoming Dstream will be aggregated into tumbling windows. The
 
 The pick-up and delivery locations of all orders within one window will be extracted into a list. This list will then be sent to Google Map API to get point-to-point travel time. The time returned by Google Map are used to construct a graph matrix of size N×N in the form shown below. N is the total number of locations in the list which is 2× number of orders +1 (driver’s current location). Each row and column correspond to one location in the list and the corresponding matrix entry is the time needed to travel between these two points. In the example shown below, there are two orders (N=5). A1 and A2 are the pick-up restaurants for each order. B1 and B2 are the delivery destinations. A0 is the current location of the driver. 
 
-<div align=center><img width="150" height="150" src="https://github.com/Min0819/food_delievery/blob/master/Image/p1.png"/></div>  
+<div align=center><img src="https://github.com/Min0819/food_delievery/blob/master/Image/p1.png"/></div>  
   
 Note that the diagonal entries are all zero but this matrix is not a diagonal matrix. Time from A to B may not be the same as B to A, possibly due to one-way roads. The graph matrix will then be appended to the end of the output Dstream for later use. 
 
@@ -42,13 +42,13 @@ Then the application will try to combine multiple orders and calculate an effici
 
 Each operator is responsible for optimizing a multi-location route and compute new score for the order set of different size k. The multi-location route can be planned by Google Map API, but we need to provide it with the order of the locations. To come up with the optimal order is also a NP-hard problem, so we will again use a greedy approach. Starting from the driver’s current location, the set of the next point includes all the restaurants. Among this set, we pick the one that is the closest based on the travel time stored in the graph matrix. Then, after we move to the first restaurant, the set of next points will be updated, removing that restaurant from the set and adding the delivery destination of that order to the set. The delivery destination will only be added at the time when its corresponding restaurant is removed from the set (meaning that restaurant has been visited). Following this algorithm, we will result in a list of ordered locations. This list is then sent to Google Map API to compute an efficient route. The total travel time to complete the whole journey is returned by Google Map and it is used to calculated the new combined score for this order set. The new combined score is calculated as:
 
-<div align=center><img width="150" height="150" src="https://github.com/Min0819/food_delievery/blob/master/Image/p2.png"/></div>
+<div align=center><img src="https://github.com/Min0819/food_delievery/blob/master/Image/p2.png"/></div>
 
 tk is the total travel time of delivering all orders in the set based on the new route. 
 
 Finally, the best schedule will be sent to the front end and display on the user interface.
 
-<div align=center><img width="150" height="150" src="https://github.com/Min0819/food_delievery/blob/master/Image/p3.png"/></div>
+<div align=center><img src="https://github.com/Min0819/food_delievery/blob/master/Image/p3.png"/></div>
 
 ## Future work
 First of all, the algorithms we used to approximate the optimal solution of multi-location route planning can be further improved. In our application, we used a variant of forward selection which adds orders into the set based on its ranking. This is not exactly the same as what forward selection do. In forward selection, it does not require the orders to be ranked. Starting with zero order, the algorithm searched all orders and iteratively add orders that gives the highest combined score for increasing sizes. This algorithm could potentially give better combination because it has a larger search space. However, it is more expensive in terms of computation and it is not easy to implement in a distributed way. Therefore, there is a trade-off between accuracy and throughput. The planning algorithm used for multi-location route can also be improved, but again, there is a tradeoff between throughput and accuracy. There are currently many multi-location planning algorithms which can be explored [4]. 
